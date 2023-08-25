@@ -1,11 +1,13 @@
 require('dotenv').config()
 const axios = require("axios");
+var cors = require('cors')
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.json()); // support json encoded bodies
+app.use(cors())
 app.use(express.urlencoded({ extended: true }));
 
 app.get("/bank/", async (req, res) => {
