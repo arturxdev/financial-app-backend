@@ -1,5 +1,5 @@
 require("dotenv").config();
-const dayjs = require('dayjs')
+const dayjs = require("dayjs");
 const axios = require("axios");
 var cors = require("cors");
 const express = require("express");
@@ -26,6 +26,41 @@ app.get("/bank/", async (req, res) => {
 
   const result = await axios.request(options);
   res.json(result.data.providers);
+});
+app.get("/bank/logos", async (req, res) => {
+  const logos = {
+    "santander_pers_mx": {
+      "code": "santander",
+      "name": "Banco Santander",
+      "logo": "https://providers.prometeoapi.com/logos/santander.png",
+    },
+    "citibanamex_pers_mx": {
+      "code": "citibanamex",
+      "name": "Citibanamex",
+      "logo": "https://providers.prometeoapi.com/logos/citibanamex.png",
+    },
+    "bbva_corp_mx": {
+      "code": "bbva",
+      "name": "BBVA",
+      "logo": "https://providers.prometeoapi.com/logos/bbva.png",
+    },
+    "bbva_pers_mx": {
+      "code": "bbva",
+      "name": "BBVA",
+      "logo": "https://providers.prometeoapi.com/logos/bbva.png",
+    },
+    "scotia_corp_mx": {
+      "code": "scotia",
+      "name": "Scotiabank",
+      "logo": "https://providers.prometeoapi.com/logos/scotia.png",
+    },
+    "banorte_pers_mx": {
+      "code": "banorte",
+      "name": "Banorte",
+      "logo": "https://providers.prometeoapi.com/logos/banorte.png",
+    },
+  };
+  res.json(logos);
 });
 app.get("/bank/:bank", async (req, res) => {
   const bankInfo = req.params["bank"];
@@ -76,20 +111,20 @@ app.post("/login", async (req, res) => {
     params: {
       key: login.data.key,
       currency: bankInfo.data.accounts[0].currency,
-      date_start: dayjs().subtract(1, 'month').format('DD/MM/YYYY'),
-      date_end: dayjs().format('DD/MM/YYYY'),
+      date_start: dayjs().subtract(1, "month").format("DD/MM/YYYY"),
+      date_end: dayjs().format("DD/MM/YYYY"),
     },
     headers: {
-      "X-API-KEY":process.env.PROMETEUS_API_KEY ,
+      "X-API-KEY": process.env.PROMETEUS_API_KEY,
     },
   };
   const transactions = await axios.request(optionsTransactions);
   const data = transactions.data.movements;
-  uploadTransactions(data,req.query.userId);
-  res.json({status:true});
+  uploadTransactions(data, req.query.userId);
+  res.json({ status: true });
 });
 
-async function uploadTransactions(data,userId) {
+async function uploadTransactions(data, userId) {
   for (let index = 0; index < data.length; index++) {
     const toInsert = {
       bankId: data[index].id,
@@ -105,7 +140,7 @@ async function uploadTransactions(data,userId) {
       .select("*")
       .eq("bankId", data[index].id);
     if (transactionFinded.data.length > 0) {
-      console.log("registro existente",data[index].id);
+      console.log("registro existente", data[index].id);
       continue;
     }
     const transactionSaved = await supabase
@@ -116,7 +151,7 @@ async function uploadTransactions(data,userId) {
       console.log("error al guardar el registro", data[index].id);
       continue;
     }
-    console.log("registro exitoso",data[index].id);
+    console.log("registro exitoso", data[index].id);
   }
 }
 
