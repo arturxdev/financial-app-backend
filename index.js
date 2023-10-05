@@ -120,14 +120,15 @@ app.post("/login", async (req, res) => {
   };
   const transactions = await axios.request(optionsTransactions);
   const data = transactions.data.movements;
-  uploadTransactions(data, req.query.userId);
+  uploadTransactions(data, req.query.userId,req.body);
   res.json({ status: true });
 });
 
-async function uploadTransactions(data, userId) {
+async function uploadTransactions(data, userId,provider) {
   for (let index = 0; index < data.length; index++) {
     const toInsert = {
-      bankId: data[index].id,
+      transactionId: data[index].id,
+      bankId: provider,
       reference: data[index].reference,
       date: data[index].date,
       detail: data[index].detail,
