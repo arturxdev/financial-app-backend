@@ -120,7 +120,7 @@ app.post("/login", async (req, res) => {
   };
   const transactions = await axios.request(optionsTransactions);
   const data = transactions.data.movements;
-  uploadTransactions(data, req.query.userId,req.body);
+  uploadTransactions(data, req.query.userId,req.body.provider);
   res.json({ status: true });
 });
 
