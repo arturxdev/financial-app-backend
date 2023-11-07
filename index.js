@@ -78,68 +78,37 @@ app.get("/bank/:bank", async (req, res) => {
   const bank = result.data.provider.bank;
   res.json({ bank, auth_fields, logo });
 });
-app.post("/login", async (req, res) => {
-  // console.log(req.body);
-  // console.log(req.query);
-  const options = {
-    method: "POST",
-    url: "https://banking.sandbox.prometeoapi.com/login/",
+app.post("/transactions", async (req, res) => {
+  var config = {
+    method: "get",
+    url:
+      "https://development.belvo.com/api/transactions/?page=1&link=0148100a-48f5-4fe2-a9bf-b2419bf63eaf",
     headers: {
-      "X-API-KEY": process.env.PROMETEUS_API_KEY,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    data: { ...req.body },
-  };
-
-  const login = await axios.request(options);
-
-  const optionsInfo = {
-    method: "GET",
-    url: "https://banking.sandbox.prometeoapi.com/account/",
-    params: { key: login.data.key },
-    headers: {
-      "X-API-KEY": process.env.PROMETEUS_API_KEY,
+      "Authorization":
+        `Basic ${process.env.PROMETEUS_API_KEY}`,
     },
   };
-  const bankInfo = await axios.request(optionsInfo);
-
-  const optionsTransactions = {
-    method: "GET",
-    url: `https://banking.sandbox.prometeoapi.com/account/${
-      bankInfo.data.accounts[0].number
-    }/movement/`,
-    params: {
-      key: login.data.key,
-      currency: bankInfo.data.accounts[0].currency,
-      date_start: dayjs().subtract(1, "month").format("DD/MM/YYYY"),
-      date_end: dayjs().format("DD/MM/YYYY"),
-    },
-    headers: {
-      "X-API-KEY": process.env.PROMETEUS_API_KEY,
-    },
-  };
-  const transactions = await axios.request(optionsTransactions);
-  const data = transactions.data.movements;
-  uploadTransactions(data, req.query.userId,req.body.provider);
+  const transactions = await axios.request(config);
+  uploadTransactions(transactions.data.results, req.query.userId, req.body.provider);
   res.json({ status: true });
 });
 
-async function uploadTransactions(data, userId,provider) {
+async function uploadTransactions(data, userId, provider) {
   for (let index = 0; index < data.length; index++) {
     const toInsert = {
       transactionId: data[index].id,
       bankId: provider,
       reference: data[index].reference,
-      date: data[index].date,
-      detail: data[index].detail,
-      value: data[index].debit !== "" ? data[index].debit : data[index].credit,
-      isCredit: data[index].credit ? true : false,
+      date: data[index].created_at,
+      detail: data[index].description,
+      value: data[index].amount,
+      isCredit: true,
       userId: userId,
     };
     const transactionFinded = await supabase
       .from("transaction")
       .select("*")
-      .eq("bankId", data[index].id);
+      .eq("transactionId", toInsert.transactionId);
     if (transactionFinded.data.length > 0) {
       console.log("registro existente", data[index].id);
       continue;
